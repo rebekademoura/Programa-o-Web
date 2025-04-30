@@ -13,11 +13,6 @@ class AuthAdmin implements FilterInterface {
         if (!session()->get('logado')) {
             return redirect()->to('/login')->with('error', 'Você não tem autorização');
         }
-        
-
-        if (session()->get('role') !== 'admin') {
-            return redirect()->to('/erros')->with('error', 'Você não tem permissão de administrador');
-        }
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null) {

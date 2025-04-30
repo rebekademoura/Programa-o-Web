@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+    
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand ms-5" href="/">Projetos</a>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -26,6 +27,16 @@
             </ul>
         </div>
     </nav>
+
+                    <!-- Mensagens -->
+                    <?php if (session()->getFlashdata('success')): ?>
+                        <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
+                    <?php endif; ?>
+
+                    <?php if (session()->getFlashdata('error')): ?>
+                        <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
+                    <?php endif; ?>
+
     <div class="container mt-4">
         
         <?= $this->renderSection('content') ?>
@@ -34,6 +45,10 @@
     <footer class="bg-dark text-white text-center py-3 mt-5">
         <p>Minha Aplicação &copy; <?= date('Y') ?></p>
     </footer>
+
+                    
+
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

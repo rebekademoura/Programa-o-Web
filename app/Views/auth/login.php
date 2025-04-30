@@ -20,7 +20,7 @@
 
                 <div class="mb-3">
                     <label for="email" class="form-label">E-mail:</label>
-                    <input type="email" name="email" id="email" value="<?= old('email') ?>" required class="form-control">
+                    <input type="email" name="email" id="email" required class="form-control">
                 </div>
 
                 <div class="mb-3">
@@ -29,9 +29,11 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary">Entrar</button>
+                
                 <a href="<?= site_url('cadastrar') ?>" class="btn btn-link">Criar conta</a>
-
             </form>
+            <br>
+                <a href="<?= site_url('esqueciasenha') ?>">Esqueci minha senha</a>
         </div>
     </div>
 </div>

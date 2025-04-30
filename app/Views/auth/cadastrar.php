@@ -37,7 +37,7 @@
 
             <div class="mb-3">
                 <label for="password_hash" class="form-label">Senha</label>
-                <input type="password" class="form-control" id="password_hash" name="password_hash" required>
+                <input type="password" class="form-control" id="password" name="password" required>
             </div>
 
             <div class="d-grid">

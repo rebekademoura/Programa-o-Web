@@ -10,7 +10,7 @@ class AuthMiddleware implements FilterInterface {
     
     public function before(RequestInterface $request, $arguments = null) {
         if (!session()->get('logado')) {
-            return redirect()->to('/login')->with('error', 'Você não tem autorização');
+            return redirect()->to('/erros')->with('error', 'Você não tem autorização');
         }
     }
 
