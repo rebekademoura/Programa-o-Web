@@ -15,6 +15,9 @@
 
                 <?php if(session()->get('logado')):?>
                     <li class="nav-item text-light">Bem vindo, <?=esc(session()->get('usuario')['username']); ?>!</li>
+                    <li class="nav-item"><a class="nav-link" href="<?php echo site_url("./perfil"); ?>">Editar Perfil</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?php echo site_url("./categorias"); ?>">Ver categorias</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?php echo site_url("./produtos"); ?>">Ver produtos</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?php echo site_url("./logout"); ?>">Sair</a></li>
 
                 <?php else: ?>

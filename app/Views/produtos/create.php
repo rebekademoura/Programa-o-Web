@@ -10,6 +10,18 @@
             <label for="descricao" id="descricao" class="form-label">Descrição: </label>
             <input type="text" id="descricao" name="descricao" require class="form-control">
 
+            <label for="id_categoria" class="form-label">Categoria</label>
+            <select name="id_categoria" id="id_categoria" class="form-select" required>
+                <option value="">Selecione...</option>
+                <?php foreach ($categorias as $categoria): ?>
+                    <option value="<?= $categoria['id'] ?>"
+                        <?= old('id_categoria', $produto['id_categoria'] ?? '') == $categoria['id'] ? 'selected' : '' ?>>
+                        <?= esc($categoria['nome']) ?>
+                    </option>
+                <?php endforeach ?>
+            </select>
+
+
             <label for="preco" id="preco" class="form-label">Preço: </label>
             <input type="number" step="0.1" id="preco" name="preco" require class="form-control">
 

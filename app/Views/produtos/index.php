@@ -41,6 +41,7 @@
                         <td> Nome </td>
                         <td> descrição </td>
                         <td> Preço </td>
+                        <td> Categoria </td>
                         <td> Ações </td>
                     </tr>
                 </thead>
@@ -51,6 +52,7 @@
                             <td> <?=$produto['nome'];?> </td>
                             <td> <?=$produto['descricao'];?> </td>
                             <td> <?=$produto['preco'];?> </td>
+                            <td><?= esc($produto['nome_categoria'] ?? 'Sem categoria') ?></td>
                             <td>
                                 <a href="<?=site_url("produtos/edit/".$produto['id']) ?>" class="btn btn-warning">Editar</a>
                                 <a href="<?=site_url("produtos/delete/".$produto['id']) ?>" class="btn btn-danger"

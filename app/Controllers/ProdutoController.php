@@ -3,16 +3,22 @@ namespace App\Controllers;
 
 use CodeIgniter\Controller;
 use App\Models\ProdutoModel;
+use App\Models\CategoriasModel;
+
 
 class ProdutoController extends Controller
 {
     protected $produtoModel;
+    protected $categoriaModel;
+
 
     public function __construct()
     {
         $this->produtoModel = new ProdutoModel();
+        $this->categoriaModel = new CategoriasModel();
     }
 
+    
     
     public function index()
     {
@@ -20,10 +26,12 @@ class ProdutoController extends Controller
         $filtroNome = $this->request->getGet('filtroNome');
         $filtroPreco = $this->request->getGet('filtroPreco');
 
-        $query = $this->produtoModel;
-        
+        $query = $this->produtoModel
+        ->select('produtos.*, categorias.nome as nome_categoria')
+        ->join('categorias', 'categorias.id = produtos.id_categoria', 'left');
+    
         if(!empty($filtroNome)){
-            $query = $query->like('nome', $filtroNome);
+            $query->like('produtos.nome', $filtroNome); 
         }
 
 
@@ -55,16 +63,20 @@ class ProdutoController extends Controller
 
     public function create()
     {
-        return view('produtos/create');
+        $data['categorias'] = $this->categoriaModel->findAll();
+
+        return view('produtos/create', $data);
     }
+
 
     
     public function store()
     {
         $this->produtoModel->save([
-            'nome'      => $this->request->getPost('nome'),
-            'descricao' => $this->request->getPost('descricao'),
-            'preco'     => $this->request->getPost('preco'),
+            'nome'          => $this->request->getPost('nome'),
+            'descricao'     => $this->request->getPost('descricao'),
+            'preco'         => $this->request->getPost('preco'),
+            'id_categoria'  => $this->request->getPost('id_categoria'),
         ]);
         return redirect()->to('/produtos');
     }
@@ -72,18 +84,21 @@ class ProdutoController extends Controller
 
     public function edit($id)
     {
+        
         $data['produto'] = $this->produtoModel->find($id);
+        $data['categorias'] = $this->categoriaModel->findAll();
         return view('produtos/edit', $data);
     }
 
 
+
     public function update($id)
     {
-
         $this->produtoModel->update($id, [
             'nome'      => $this->request->getPost('nome'),
             'descricao' => $this->request->getPost('descricao'),
             'preco'     => $this->request->getPost('preco'),
+            'categoria_id'=> $this->request->getPost('categoria_id')
         ]);
         return redirect()->to('/produtos');
     }

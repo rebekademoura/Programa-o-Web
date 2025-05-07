@@ -16,17 +16,24 @@ $routes->get('buscar', 'BancoTesteController::buscar');
 $routes->get('contatomodel', 'HomeController::submitContact');
 
 $routes->group('produtos', ['filter'=>'authAdmin'], function($routes){
+
+    //processo criar, editar e deletar produtos
     $routes->get('/', 'ProdutoController::index');
     $routes->get('create', 'ProdutoController::create');
     $routes->post('store', 'ProdutoController::store');
     $routes->get('edit/(:num)', 'ProdutoController::edit/$1');
     $routes->post('update/(:num)', 'ProdutoController::update/$1');
-    $routes->get('delete/(:num)', 'ProdutoController::delete/$1');
-}); // ← Correção aqui
+    $routes->get('delete/(:num)', 'ProdutoController::delete/$1'); 
 
-$routes->group('erros', ['filter'=>'AuthMiddleware'], function($routes){
-    $routes->get('erros', 'AuthController::erros');
-}); // ← Correção aqui também
+});
+
+    //processos de criar, editar e deletar categorias
+    $routes->get('categorias', 'CategoriasController::index',['filter'=>'authAdmin']);
+    $routes->get('categorias/create', 'CategoriasController::create',['filter'=>'authAdmin']);
+    $routes->post('categorias/store', 'CategoriasController::store',['filter'=>'authAdmin']);
+    $routes->get('categorias/edit/(:num)', 'CategoriasController::edit/$1',['filter'=>'authAdmin']);
+    $routes->post('categorias/update/(:num)', 'CategoriasController::update/$1',['filter'=>'authAdmin']);
+    $routes->get('categorias/delete/(:num)', 'CategoriasController::delete/$1',['filter'=>'authAdmin']);
 
 // Login e cadastro de usuários
     $routes->get('cadastrar', 'AuthController::cadastrar');
@@ -51,7 +58,3 @@ $routes->group('erros', ['filter'=>'AuthMiddleware'], function($routes){
     $routes->post('perfil/update','PerfilController::update',['filter'=>'authAdmin']); //rota para carregar o update: username e email
     $routes->post('perfil/updateSenha','PerfilController::updateSenha',['filter'=>'authAdmin']); //rota para carregar o update: nova senha
     $routes->post('perfil/updateFoto','PerfilController::updateFoto',['filter'=>'authAdmin']); //rota para carregar o update: foto
-
-
-
-
