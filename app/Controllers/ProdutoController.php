@@ -8,8 +8,20 @@ use App\Models\CategoriasModel;
 
 class ProdutoController extends Controller
 {
-    protected $produtoModel;
-    protected $categoriaModel;
+
+    // Dentro da classe ProdutoController
+public function setProdutoModel($produtoModel)
+{
+    $this->produtoModel = $produtoModel;
+}
+
+public function setCategoriaModel($categoriaModel)
+{
+    $this->categoriaModel = $categoriaModel;
+}
+
+    public $produtoModel;
+    public $categoriaModel;
 
 
     public function __construct()
@@ -21,44 +33,34 @@ class ProdutoController extends Controller
     
     
     public function index()
-    {
-        //recebe string de nome e preco do formulário
-        $filtroNome = $this->request->getGet('filtroNome');
-        $filtroPreco = $this->request->getGet('filtroPreco');
+    {        
+        $busca = $this->request->getGet('busca');
+        $preco = $this->request->getGet('preco');
 
-        $query = $this->produtoModel
-        ->select('produtos.*, categorias.nome as nome_categoria')
-        ->join('categorias', 'categorias.id = produtos.id_categoria', 'left');
+        $query = $this->produtoModel->getComCategoriaECapa($busca, $preco);
+
+        if (!empty($busca)) {
+            $query->like('produtos.nome', $busca);
+        }
     
-        if(!empty($filtroNome)){
-            $query->like('produtos.nome', $filtroNome); 
+        if (!empty($preco)) {
+            if ($preco === 'baixo') {
+                $this->produtoModel->where('produtos.preco <', 100);
+            } elseif ($preco === 'medio') {
+                $this->produtoModel->where('produtos.preco >=', 100)->where('produtos.preco <=', 500);
+            } elseif ($preco === 'alto') {
+                $this->produtoModel->where('produtos.preco >', 500);
+            }
         }
-
-
-        if(!empty($filtroPreco)){
-            if($filtroPreco=='baixo'){
-                $query = $query->where(' preco < 100');
-            }
-            if($filtroPreco=='medio'){
-                $query = $query->where('preco > 100')->where('preco < 500');
-            }
-            if($filtroPreco=='alto'){
-                $query = $query->where('preco > 500');
-            }
-            
-
-        }
-
+    
         $data = [
-            'produtos' => $query->paginate(10),
-            'pager' => $query->pager,
-            'busca' => $filtroNome,
-            'preco' => $filtroPreco
+            'produtos' => $query->paginate(5, 'default'),
+            'pager'    => $query->pager,
+            'busca'    => $busca,
+            'preco'    => $preco,
         ];
-
+    
         return view('produtos/index', $data);
-
-        
     }
 
     public function create()

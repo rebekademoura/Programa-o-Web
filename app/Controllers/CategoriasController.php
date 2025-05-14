@@ -6,7 +6,7 @@ use App\Models\CategoriasModel;
 
 class CategoriasController extends Controller
 {
-    protected $categoriasModel;
+    public $categoriasModel;
 
     public function __construct()
     {

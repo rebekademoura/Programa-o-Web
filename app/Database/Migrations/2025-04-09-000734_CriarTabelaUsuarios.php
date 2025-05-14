@@ -12,7 +12,7 @@ class CriarTabelaUsuarios extends Migration
             'username' => [ 'type' => 'VARCHAR', 'constraint' => 80],
             'email' =>['type' => 'VARCHAR', 'constraint' => 80],
             'password_hash' =>[ 'type' => 'VARCHAR', 'constraint' => 255],
-            'role' =>[ 'type' => 'BOO', 'constraint' => ],
+            'role' =>[ 'type' => 'BOOLEAN', 'default' => TRUE],
             'created_at' =>[ 'type' => 'DATETIME','null' => TRUE ],
             'update_at' =>[ 'type' => 'DATETIME','null' => TRUE]
 

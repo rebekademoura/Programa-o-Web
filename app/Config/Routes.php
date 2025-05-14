@@ -58,3 +58,9 @@ $routes->group('produtos', ['filter'=>'authAdmin'], function($routes){
     $routes->post('perfil/update','PerfilController::update',['filter'=>'authAdmin']); //rota para carregar o update: username e email
     $routes->post('perfil/updateSenha','PerfilController::updateSenha',['filter'=>'authAdmin']); //rota para carregar o update: nova senha
     $routes->post('perfil/updateFoto','PerfilController::updateFoto',['filter'=>'authAdmin']); //rota para carregar o update: foto
+
+//rotas para edição de perfil do usuário
+    $routes->get('fotosproduto/(:num)','FotoProdutoController::index/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
+    $routes->post('fotosproduto/upload/(:num)','FotoProdutoController::upload/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
+    $routes->get('fotosproduto/definircapa/(:num)','FotoProdutoController::definircapa/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
+    $routes->get('fotosproduto/delete/(:num)','FotoProdutoController::delete/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto

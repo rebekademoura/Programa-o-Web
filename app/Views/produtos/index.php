@@ -37,12 +37,13 @@
             <table class="table table-bordered ">
                 <thead class="thead-dark">
                     <tr>
-                        <td> Id </td>
-                        <td> Nome </td>
-                        <td> descrição </td>
-                        <td> Preço </td>
-                        <td> Categoria </td>
-                        <td> Ações </td>
+                        <th> Id </th>
+                        <th> Nome </th>
+                        <th> descrição </th>
+                        <th> Preço </th>
+                        <th> Categoria </th>
+                        <th>Foto</th>
+                        <th> Ações </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -54,10 +55,34 @@
                             <td> <?=$produto['preco'];?> </td>
                             <td><?= esc($produto['nome_categoria'] ?? 'Sem categoria') ?></td>
                             <td>
+                            	<?php if (!empty($produto['foto_capa'])): ?>
+                                <!-- btn do modal-->
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#modalFoto<?= $produto['id'] ?>">
+                                    <img src="<?= base_url('uploads/fotos/' . $produto['foto_capa']) ?>" width="80" style="object-fit: cover;">
+                                </a>
+
+                                <!-- modal -->
+                                <div class="modal fade" id="modalFoto<?= $produto['id'] ?>" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-body text-center">
+                                                <img src="<?= base_url('uploads/fotos/' . $produto['foto_capa']) ?>" class="img-fluid">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <span class="text-muted">Sem imagem</span>
+                            <?php endif ?>
+                            </td>
+                            <td>
                                 <a href="<?=site_url("produtos/edit/".$produto['id']) ?>" class="btn btn-warning">Editar</a>
                                 <a href="<?=site_url("produtos/delete/".$produto['id']) ?>" class="btn btn-danger"
                                    onclick="return confirm('Deseja mesmo excluir este produto?')"
                                 >Excluir</a>
+                                <a href="<?= site_url('fotosproduto/' . $produto['id']) ?>" class="btn btn-sm btn-outline-primary">
+                                Gerenciar Fotos
+                            </a>
 
                             </td>
                         </tr>    
@@ -71,7 +96,8 @@
             <p>Nenhum produto encontrado</p>
         <?php endif ?>
                 
-    
+
+        
 
     </div>
 
