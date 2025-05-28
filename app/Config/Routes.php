@@ -64,3 +64,6 @@ $routes->group('produtos', ['filter'=>'authAdmin'], function($routes){
     $routes->post('fotosproduto/upload/(:num)','FotoProdutoController::upload/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
     $routes->get('fotosproduto/definircapa/(:num)','FotoProdutoController::definircapa/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
     $routes->get('fotosproduto/delete/(:num)','FotoProdutoController::delete/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
+
+    
+    $routes->post('fotosproduto/uploadAjax/(:num)', 'FotoProdutoController::uploadAjax/$1');

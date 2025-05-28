@@ -61,6 +61,7 @@ class AuthController extends BaseController
         if ($user && password_verify($password, $user['password_hash'])) {
             session()->set('logado', true);
             session()->set('usuario', $user);
+            session()->set('usuario_id', $user['id']);
            return redirect()->to('/produtos');
         } else {
           

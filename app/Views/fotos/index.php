@@ -14,6 +14,10 @@
         <a href="<?= site_url('produtos') ?>" class="btn btn-secondary">Voltar</a>
     </form>
 
+    <form action="<?= site_url("fotosproduto/uploadAjax/$produtoId") ?>" class="dropzone" id="fotoUploadForm">
+    
+    </form>
+
     <!-- lsita de fotos -->
     <?php if (!empty($fotos)): ?>
         <div class="row">
@@ -37,5 +41,23 @@
         <p>Nenhuma foto encontrada</p>
     <?php endif ?>
 </div>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+
+<script>
+    Dropzone.options.fotoUploadForm = {
+        paramName: "foto", 
+        maxFilesize: 5, 
+        acceptedFiles: 'image/*',
+        dictDefaultMessage: "Arraste as imagens aqui ou clique para enviar",
+        success: function(file, response) {
+            console.log("Enviado com sucesso", response);
+        },
+        error: function(file, response) {
+            console.error("Erro ao enviar", response);
+        }
+    };
+</script>
 
 <?= $this->endSection() ?>
