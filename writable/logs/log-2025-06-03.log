@@ -1,0 +1,22 @@
+DEBUG - 2025-06-03 23:58:20 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+CRITICAL - 2025-06-03 23:58:21 --> TypeError: App\Models\ProdutoModel::getProdutosPorUsuarioComCategoriaECapa(): Argument #1 ($usuarioId) must be of type int, null given, called in C:\xampp\htdocs\code\app\Controllers\ProdutoController.php on line 48
+[Method: GET, Route: produtos]
+in APPPATH\Models\ProdutoModel.php on line 24.
+ 1 APPPATH\Controllers\ProdutoController.php(48): App\Models\ProdutoModel->getProdutosPorUsuarioComCategoriaECapa(null)
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\ProdutoController->index()
+ 3 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ProdutoController))
+ 4 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(334): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+DEBUG - 2025-06-03 23:58:22 --> Session: Class initialized using 'CodeIgniter\Session\Handlers\FileHandler' driver.
+CRITICAL - 2025-06-03 23:58:22 --> TypeError: App\Models\ProdutoModel::getProdutosPorUsuarioComCategoriaECapa(): Argument #1 ($usuarioId) must be of type int, null given, called in C:\xampp\htdocs\code\app\Controllers\ProdutoController.php on line 48
+[Method: GET, Route: produtos]
+in APPPATH\Models\ProdutoModel.php on line 24.
+ 1 APPPATH\Controllers\ProdutoController.php(48): App\Models\ProdutoModel->getProdutosPorUsuarioComCategoriaECapa(null)
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\ProdutoController->index()
+ 3 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\ProdutoController))
+ 4 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(334): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(56): CodeIgniter\Boot::bootWeb(Object(Config\Paths))

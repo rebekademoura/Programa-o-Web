@@ -67,3 +67,5 @@ $routes->group('produtos', ['filter'=>'authAdmin'], function($routes){
 
     
     $routes->post('fotosproduto/uploadAjax/(:num)', 'FotoProdutoController::uploadAjax/$1');
+
+$routes->get('produtos/index', 'ProdutoController::publico');

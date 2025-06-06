@@ -40,36 +40,44 @@ public function setCategoriaModel($categoriaModel)
     
     
     public function index()
-    {        
-        $usuarioId = session()->get('usuario_id');
-        $busca = $this->request->getGet('busca');
-        $preco = $this->request->getGet('preco');
+{        
+    $usuarioId = session()->get('usuario_id');
+    $busca = $this->request->getGet('filtroNome'); // corresponde ao name do input
+    $preco = $this->request->getGet('filtroPreco');
+    $idCategoria = $this->request->getGet('id_categoria');
 
-        $query = $this->produtoModel->getProdutosPorUsuarioComCategoriaECapa($usuarioId);
+    $query = $this->produtoModel->getProdutosPorUsuarioComCategoriaECapa($usuarioId);
 
-        if (!empty($busca)) {
-            $query->like('produtos.nome', $busca);
-        }
-    
-        if (!empty($preco)) {
-            if ($preco === 'baixo') {
-                $this->produtoModel->where('produtos.preco <', 100);
-            } elseif ($preco === 'medio') {
-                $this->produtoModel->where('produtos.preco >=', 100)->where('produtos.preco <=', 500);
-            } elseif ($preco === 'alto') {
-                $this->produtoModel->where('produtos.preco >', 500);
-            }
-        }
-        
-
-        $data = [
-            'produtos' => $query->paginate(5, 'default'),
-            'pager'    => $query->pager,
-            'busca'    => $busca,
-            'preco'    => $preco,
-        ];
-        return view('produtos/index', $data);
+    if (!empty($busca)) {
+        $query->like('produtos.nome', $busca);
     }
+
+    if (!empty($preco)) {
+        if ($preco === 'baixo') {
+            $query->where('produtos.preco <', 100);
+        } elseif ($preco === 'medio') {
+            $query->where('produtos.preco >=', 100)->where('produtos.preco <=', 500);
+        } elseif ($preco === 'alto') {
+            $query->where('produtos.preco >', 500);
+        }
+    }
+
+    if (!empty($idCategoria)) {
+        $query->where('produtos.id_categoria', $idCategoria);
+    }
+
+
+    $data = [
+        'produtos'   => $query->paginate(5, 'default'),
+        'pager'      => $query->pager,
+        'filtroNome' => $busca,
+        'preco'      => $preco,
+        'categorias' => $this->categoriaModel->findAll(),
+    ];
+
+    return view('produtos/index', $data);
+}
+
 
     public function create()
     {
@@ -164,5 +172,52 @@ public function setCategoriaModel($categoriaModel)
         } 
         
     }
+
+
+
+
+
+    //visualização do produto para usuário comum
+    public function publico()
+{
+    $produtoModel = new \App\Models\ProdutoModel();
+    $categoriaModel = new \App\Models\CategoriasModel();
+
+    $filtroNome = $this->request->getGet('filtroNome');
+    $filtroPreco = $this->request->getGet('filtroPreco');
+    $idCategoria = $this->request->getGet('id_categoria');
+
+    $query = $produtoModel->getComCategoriaECapa(); // método já existente
+
+    if (!empty($filtroNome)) {
+        $query->like('produtos.nome', $filtroNome);
+    }
+
+    if (!empty($filtroPreco)) {
+        if ($filtroPreco === 'baixo') {
+            $query->where('produtos.preco <', 100);
+        } elseif ($filtroPreco === 'medio') {
+            $query->where('produtos.preco >=', 100)->where('produtos.preco <=', 500);
+        } elseif ($filtroPreco === 'alto') {
+            $query->where('produtos.preco >', 500);
+        }
+    }
+
+    if (!empty($idCategoria)) {
+        $query->where('produtos.id_categoria', $idCategoria);
+    }
+
+    $data = [
+        'produtos' => $query->paginate(8),
+        'pager' => $query->pager,
+        'categorias' => $categoriaModel->findAll(),
+        'filtroNome' => $filtroNome,
+        'filtroPreco' => $filtroPreco,
+        'idCategoria' => $idCategoria,
+    ];
+
+return view('publico/index', $data); // ← era 'publico/home'
+}
+
 }
 

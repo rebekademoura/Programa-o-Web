@@ -9,16 +9,28 @@
         <!--formulário de para filtrar os produtos-->
         <form method="get" action="<?=site_url("produtos") ?>" class="mb-3">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         <input type="text" name="filtroNome" value="<?=esc($filtroNome??'')?>" class="form-control" placeholder="Busque por um produto">
                     </div>
 
-                    <div class="col-md-5">
+                    <div class="col-md-3">
                         <select class="form-select" name="filtroPreco">
                             <option>Todos</option>
                             <option value="baixo" <?=esc($preco=='baixo'?'selected':'')?>>Abaixo de R$99,00</option>
                             <option value="medio" <?=esc($preco=='medio'?'selected':'')?>>Entre R$100,00 e R$499,00</option>
                             <option value="alto" <?=esc($preco=='alto'?'selected':'')?>>Acima de R$500,00</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <select name="id_categoria" id="id_categoria" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <?php foreach ($categorias as $categoria): ?>
+                                <option value="<?= $categoria['id'] ?>"
+                                <?= old('id_categoria', $produto['id_categoria'] ?? '') == $categoria['id'] ? 'selected' : '' ?>>
+                                <?= esc($categoria['nome']) ?>
+                                </option>
+                            <?php endforeach ?>
                         </select>
                     </div>
                     
