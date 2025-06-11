@@ -5,14 +5,16 @@
     <title><?= esc($produto['nome']) ?> - Viva Leve</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=psychiatry" />
 </head>
 <body>
 
 <!-- Topo -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="<?= site_url('produtos/index') ?>">Minha Loja</a>   
-        <div class="ms-auto">
+  <a class="navbar-brand ms-5" href="<?=site_url('produtos/index')?>"><span class="material-symbols-outlined">
+psychiatry
+</span>  Viva Leve</a>     <div class="ms-auto">
             <a href="<?= site_url('login') ?>" class="btn btn-outline-primary me-2">Login</a>
             <a href="<?= site_url('cadastro') ?>" class="btn btn-primary">Cadastro</a>
         </div>

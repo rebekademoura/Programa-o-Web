@@ -12,8 +12,7 @@
 
 <!-- Topo -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand ms-5" href="produtos/index"><span class="material-symbols-outlined">
+     <a class="navbar-brand ms-5" href="produtos/index"><span class="material-symbols-outlined">
 psychiatry
 </span>  Viva Leve</a>
         <div class="ms-auto">
