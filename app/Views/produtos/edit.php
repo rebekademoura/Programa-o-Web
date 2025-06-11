@@ -21,7 +21,9 @@
                 <?php endforeach ?>
             </select>
 
-
+            <label for="estoque" id="estoque" class="form-label">Quantidade em estoque: </label>
+            <input type="text" id="estoque" name="estoque" require class="form-control" value="<?=$produto['estoque']?>">
+            
             <label for="preco" id="preco" class="form-label">Preço: </label>
             <input type="number" step="0.1" id="preco" name="preco" require class="form-control" value="<?=$produto['preco']?>">
 

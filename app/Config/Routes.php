@@ -68,4 +68,7 @@ $routes->group('produtos', ['filter'=>'authAdmin'], function($routes){
     
     $routes->post('fotosproduto/uploadAjax/(:num)', 'FotoProdutoController::uploadAjax/$1');
 
-$routes->get('produtos/index', 'ProdutoController::publico');
+    //loja
+$routes->get('produtos/index', 'LojaController::publico');
+$routes->get('produtos/detalhes/(:num)', 'LojaController::detalhes/$1');
+$routes->get('loja/(:num)', 'LojaController::loja/$1');

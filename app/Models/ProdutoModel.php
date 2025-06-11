@@ -9,7 +9,7 @@ class ProdutoModel extends Model
     protected $table      = 'produtos';
     protected $primaryKey = 'id';
 
-    protected $allowedFields = ['nome','usuario_id', 'descricao', 'preco','id_categoria'];
+    protected $allowedFields = ['nome','usuario_id', 'descricao', 'preco','id_categoria', 'estoque', 'ativo'];
 
     protected $useTimestamps = true;
 

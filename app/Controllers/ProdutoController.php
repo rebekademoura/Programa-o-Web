@@ -40,13 +40,18 @@ public function setCategoriaModel($categoriaModel)
     
     
     public function index()
-{        
+{
     $usuarioId = session()->get('usuario_id');
-    $busca = $this->request->getGet('filtroNome'); // corresponde ao name do input
+
+    if (!$usuarioId) {
+        return redirect()->to('/login')->with('erro', 'Você precisa estar logado para acessar esta página.');
+    }
+
+    $busca = $this->request->getGet('filtroNome');
     $preco = $this->request->getGet('filtroPreco');
     $idCategoria = $this->request->getGet('id_categoria');
 
-    $query = $this->produtoModel->getProdutosPorUsuarioComCategoriaECapa($usuarioId);
+    $query = $this->produtoModel->getProdutosPorUsuarioComCategoriaECapa((int) $usuarioId);
 
     if (!empty($busca)) {
         $query->like('produtos.nome', $busca);
@@ -66,7 +71,6 @@ public function setCategoriaModel($categoriaModel)
         $query->where('produtos.id_categoria', $idCategoria);
     }
 
-
     $data = [
         'produtos'   => $query->paginate(5, 'default'),
         'pager'      => $query->pager,
@@ -77,6 +81,7 @@ public function setCategoriaModel($categoriaModel)
 
     return view('produtos/index', $data);
 }
+
 
 
     public function create()
@@ -97,6 +102,7 @@ public function setCategoriaModel($categoriaModel)
             'usuario_id'  => $usuarioId,
             'nome'          => $this->request->getPost('nome'),
             'descricao'     => $this->request->getPost('descricao'),
+            'estoque'       => $this->request->getPost('estoque'),
             'preco'         => $this->request->getPost('preco'),
             'id_categoria'  => $this->request->getPost('id_categoria'),
         ]);
@@ -129,20 +135,19 @@ public function setCategoriaModel($categoriaModel)
 
     if ($produto['usuario_id'] == $usuarioId) {
         $this->produtoModel->update($id, [
-        'nome'         => $this->request->getPost('nome'),
-        'descricao'    => $this->request->getPost('descricao'),
-        'preco'        => $this->request->getPost('preco'),
-        'categoria_id' => $this->request->getPost('categoria_id')
-    ]);
+            'nome'         => $this->request->getPost('nome'),
+            'descricao'    => $this->request->getPost('descricao'),
+            'preco'        => $this->request->getPost('preco'),
+            'estoque'      => $this->request->getPost('estoque'), // ✅ incluído aqui
+            'id_categoria' => $this->request->getPost('id_categoria') // corrigido: categoria_id → id_categoria
+        ]);
 
-    return redirect()->to('/produtos')->with('success', 'Produto atualizado com sucesso.');
-    }else{
+        return redirect()->to('/produtos')->with('success', 'Produto atualizado com sucesso.');
+    } else {
         return redirect()->back()->with('error', 'Você não está autorizado a editar este produto.');
-
     }
-
-    
 }
+
 
 
     public function delete($id)
@@ -172,52 +177,5 @@ public function setCategoriaModel($categoriaModel)
         } 
         
     }
-
-
-
-
-
-    //visualização do produto para usuário comum
-    public function publico()
-{
-    $produtoModel = new \App\Models\ProdutoModel();
-    $categoriaModel = new \App\Models\CategoriasModel();
-
-    $filtroNome = $this->request->getGet('filtroNome');
-    $filtroPreco = $this->request->getGet('filtroPreco');
-    $idCategoria = $this->request->getGet('id_categoria');
-
-    $query = $produtoModel->getComCategoriaECapa(); // método já existente
-
-    if (!empty($filtroNome)) {
-        $query->like('produtos.nome', $filtroNome);
-    }
-
-    if (!empty($filtroPreco)) {
-        if ($filtroPreco === 'baixo') {
-            $query->where('produtos.preco <', 100);
-        } elseif ($filtroPreco === 'medio') {
-            $query->where('produtos.preco >=', 100)->where('produtos.preco <=', 500);
-        } elseif ($filtroPreco === 'alto') {
-            $query->where('produtos.preco >', 500);
-        }
-    }
-
-    if (!empty($idCategoria)) {
-        $query->where('produtos.id_categoria', $idCategoria);
-    }
-
-    $data = [
-        'produtos' => $query->paginate(8),
-        'pager' => $query->pager,
-        'categorias' => $categoriaModel->findAll(),
-        'filtroNome' => $filtroNome,
-        'filtroPreco' => $filtroPreco,
-        'idCategoria' => $idCategoria,
-    ];
-
-return view('publico/index', $data); // ← era 'publico/home'
-}
-
 }
 
