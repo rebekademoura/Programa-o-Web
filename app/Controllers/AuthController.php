@@ -50,24 +50,34 @@ class AuthController extends BaseController
 
     //realizar o login (busca no banco)
     public function autenticar()
-    {
+{
+    $email    = $this->request->getPost('email');
+    $password = $this->request->getPost('senha');
+    $user     = $this->usuarioModel->where('email', $email)->first();
 
-        $email = $this->request->getPost('email');
-        $password = $this->request->getPost('senha');
-        $user = $this->usuarioModel->where('email', $email)->first();
+    if ($user && password_verify($password, $user['password_hash'])) {
+        // Seta sessão
+        session()->set('logado', true);
+        session()->set('usuario',   $user);
+        session()->set('usuario_id',$user['id']);
 
-
-
-        if ($user && password_verify($password, $user['password_hash'])) {
-            session()->set('logado', true);
-            session()->set('usuario', $user);
-            session()->set('usuario_id', $user['id']);
-           return redirect()->to('/produtos');
-        } else {
-          
-           return redirect()->to('/login')->with('error', 'Credenciais inválidas');
+        // Redireciona conforme o role
+        switch ($user['role']) {
+            case 'admin_geral':
+                return redirect()->to('/dashboard');
+            case 'admin':
+                return redirect()->to('/categorias');
+            case 'seller':
+                return redirect()->to('/seller'); // ajuste conforme sua rota de seller
+            default: // 'user'
+                return redirect()->to('/');
         }
     }
+
+    return redirect()->to('/login')
+                     ->with('error', 'Credenciais inválidas');
+}
+
 
     public function logout()
     {

@@ -6,6 +6,7 @@ use App\Models\ProdutoModel;
 use App\Models\CategoriasModel;
 use App\Models\FotoProdutoModel;
 use App\Models\UsuarioModel;
+use App\Models\VendaModel; 
 
 
 class ProdutoController extends Controller
@@ -28,6 +29,7 @@ public function setCategoriaModel($categoriaModel)
     public $produtoModel;
     public $categoriaModel;
     public $usuarioModel;
+    public $vendaModel;
 
 
     public function __construct()
@@ -35,6 +37,7 @@ public function setCategoriaModel($categoriaModel)
         $this->produtoModel   = new ProdutoModel();
         $this->categoriaModel = new CategoriasModel();
         $this->usuarioModel   = new UsuarioModel();
+        $this->vendaModel     = new VendaModel();
     }
 
     
@@ -177,5 +180,38 @@ public function setCategoriaModel($categoriaModel)
         } 
         
     }
+
+
+
+    //RELATÓRIO DE VENDAS
+    public function relatorioVendas()
+{
+    $usuarioId = session()->get('usuario_id');
+    if (! $usuarioId) {
+        return redirect()->to('/login')->with('error', 'Você precisa estar logado para acessar o relatório.');
+    }
+
+    // Busca todas as vendas deste vendedor na tabela 'vendas'
+    $vendas = $this->vendaModel
+                   ->select('vendas.*, u.username as comprador, p.nome as produto')
+                   ->join('usuarios u', 'u.id = vendas.usuario_comprador_id')
+                   ->join('produtos p', 'p.id = vendas.produto_id')
+                   ->where('vendas.usuario_vendedor_id', $usuarioId)
+                   ->orderBy('criado_em', 'DESC')
+                   ->findAll();
+
+    // Calcula métricas
+    $totalVendido    = array_sum(array_column($vendas, 'valor_total'));
+    $quantidadeTotal = array_sum(array_column($vendas, 'quantidade'));
+
+    $data = [
+        'vendas'          => $vendas,
+        'totalVendido'    => $totalVendido,
+        'quantidadeTotal' => $quantidadeTotal,
+    ];
+
+    return view('produtos/relatorio', $data);
+}
+
 }
 

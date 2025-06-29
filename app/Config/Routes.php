@@ -1,74 +1,100 @@
 <?php
 
+namespace Config;
+
+use Config\Services;
 use CodeIgniter\Router\RouteCollection;
 
-// método -> url -> Controller -> Função
-$routes->get('/', 'HomeController::index');
+/*
+ * --------------------------------------------------------------------
+ * Route Definitions
+ * --------------------------------------------------------------------
+ */
 
-// Criar uma página sobre/contato
-$routes->get('/sobre', 'HomeController::sobre');
-$routes->get('/contato', 'HomeController::contato');
-$routes->post('/contato/submit', 'HomeController::submitContact');
+$routes = Services::routes();
 
-$routes->get('/testebanco', 'BancoTesteController::index');
-$routes->get('/listar', 'HomeController::Listar');
-$routes->get('buscar', 'BancoTesteController::buscar');
-$routes->get('contatomodel', 'HomeController::submitContact');
+// --------------------------------------------------------------------
+// Rotas Públicas (livres para não logados)
+// --------------------------------------------------------------------
+$routes->get('/',                              'LojaController::publico');
+$routes->get('produtos/detalhes/(:num)',       'LojaController::detalhes/$1');
+$routes->get('publico/lojaVendedor/(:num)',    'LojaController::lojaVendedor/$1');
 
-$routes->group('produtos', ['filter'=>'authAdmin'], function($routes){
+// Home e página estática
+$routes->get('sobre',           'HomeController::sobre');
+$routes->get('contato',         'HomeController::contato');
+$routes->post('contato/submit', 'HomeController::submitContact');
 
-    //processo criar, editar e deletar produtos
-    $routes->get('/', 'ProdutoController::index');
-    $routes->get('create', 'ProdutoController::create');
-    $routes->post('store', 'ProdutoController::store');
-    $routes->get('edit/(:num)', 'ProdutoController::edit/$1');
-    $routes->post('update/(:num)', 'ProdutoController::update/$1');
-    $routes->get('delete/(:num)', 'ProdutoController::delete/$1'); 
+// Autenticação e cadastro
+$routes->get('cadastrar',      'AuthController::cadastrar');
+$routes->post('salvarUsuario', 'AuthController::salvarUsuario');
+$routes->get('login',          'AuthController::login');
+$routes->post('autenticar',    'AuthController::autenticar');
+$routes->get('logout',         'AuthController::logout');
 
+// Esqueci senha / Redefinir senha
+$routes->get('esqueciasenha',          'AuthController::esqueciASenha');
+$routes->post('esqueciasenha',         'AuthController::enviarTokenSenha');
+$routes->get('redefinirsenha/(:any)',  'AuthController::alterarSenha/$1');
+$routes->post('redefinirsenha/(:any)', 'AuthController::salvarSenha/$1');
+
+// --------------------------------------------------------------------
+// Rotas Protegidas (aplicam globalmente o filtro AuthAdmin via Filters.php)
+// --------------------------------------------------------------------
+
+// Perfil do usuário
+$routes->get('perfil',              'PerfilController::index');
+$routes->post('perfil/update',      'PerfilController::update');
+$routes->post('perfil/updateSenha', 'PerfilController::updateSenha');
+$routes->post('perfil/updateFoto',  'PerfilController::updateFoto');
+
+// Gerenciamento de Fotos de Produto
+$routes->get('fotosproduto/(:num)',         'FotoProdutoController::index/$1');
+$routes->post('fotosproduto/upload/(:num)',  'FotoProdutoController::upload/$1');
+$routes->post('fotosproduto/uploadAjax/(:num)', 'FotoProdutoController::uploadAjax/$1');
+$routes->get('fotosproduto/definircapa/(:num)', 'FotoProdutoController::definircapa/$1');
+$routes->get('fotosproduto/delete/(:num)',     'FotoProdutoController::delete/$1');
+
+// Carrinho (somente usuários logados)
+$routes->match(['get','post'], 'loja/adicionarAoCarrinho/(:num)', 'LojaController::adicionarAoCarrinho/$1');
+$routes->get('loja/carrinho',                   'LojaController::carrinho');
+$routes->get('loja/removerDoCarrinho/(:num)',   'LojaController::removerDoCarrinho/$1');
+$routes->post('loja/removerSelecionados',       'LojaController::removerSelecionados');
+$routes->post('loja/finalizarCompra',           'LojaController::finalizarCompra');
+
+// --------------------------------------------------------------------
+// Administração de Produtos (só admin/admin_geral)
+// --------------------------------------------------------------------
+$routes->group('produtos', ['filter' => 'authAdmin'], function(RouteCollection $routes) {
+    $routes->get('/',             'ProdutoController::index');
+    $routes->get('create',        'ProdutoController::create');
+    $routes->post('store',        'ProdutoController::store');
+    $routes->get('edit/(:num)',   'ProdutoController::edit/$1');
+    $routes->post('update/(:num)','ProdutoController::update/$1');
+    $routes->get('delete/(:num)', 'ProdutoController::delete/$1');
 });
 
-    //processos de criar, editar e deletar categorias
-    $routes->get('categorias', 'CategoriasController::index',['filter'=>'authAdmin']);
-    $routes->get('categorias/create', 'CategoriasController::create',['filter'=>'authAdmin']);
-    $routes->post('categorias/store', 'CategoriasController::store',['filter'=>'authAdmin']);
-    $routes->get('categorias/edit/(:num)', 'CategoriasController::edit/$1',['filter'=>'authAdmin']);
-    $routes->post('categorias/update/(:num)', 'CategoriasController::update/$1',['filter'=>'authAdmin']);
-    $routes->get('categorias/delete/(:num)', 'CategoriasController::delete/$1',['filter'=>'authAdmin']);
+// --------------------------------------------------------------------
+// Administração de Categorias (só admin/admin_geral)
+// --------------------------------------------------------------------
+$routes->group('categorias', ['filter' => 'authAdmin'], function(RouteCollection $routes) {
+    $routes->get('/',             'CategoriasController::index');
+    $routes->get('create',        'CategoriasController::create');
+    $routes->post('store',        'CategoriasController::store');
+    $routes->get('edit/(:num)',   'CategoriasController::edit/$1');
+    $routes->post('update/(:num)','CategoriasController::update/$1');
+    $routes->get('delete/(:num)', 'CategoriasController::delete/$1');
+});
 
-// Login e cadastro de usuários
-    $routes->get('cadastrar', 'AuthController::cadastrar');
-    $routes->post('salvarUsuario', 'AuthController::salvarUsuario');
-    $routes->get('login', 'AuthController::login');
-    $routes->post('autenticar', 'AuthController::autenticar');
-    $routes->get('logout', 'AuthController::logout');
+// --------------------------------------------------------------------
+// Dashboard Super Admin (só admin_geral)
+// --------------------------------------------------------------------
+$routes->get('dashboard',                'DashboardController::index', ['filter' => 'authAdmin']);
+$routes->get('dashboard/approve/(:num)', 'DashboardController::approve/$1', ['filter' => 'authAdmin']);
+$routes->get('dashboard/reject/(:num)',  'DashboardController::reject/$1', ['filter' => 'authAdmin']);
+$routes->post('dashboard/deleteUser/(:num)', 'DashboardController::deleteUser/$1', ['filter' => 'authAdmin']);
 
-//esqueci senha
-    //mostra o formulário
-    $routes->get('esqueciasenha', 'AuthController::esqueciASenha');
-    //envia o formulário
-    $routes->post('esqueciasenha', 'AuthController::enviarTokenSenha');
-
-    //redefinir senha
-    $routes->get('redefinirsenha/(:any)', 'AuthController::alterarSenha/$1');
-    $routes->post('redefinirsenha/(:any)', 'AuthController::salvarSenha/$1');
-
-
-//rotas para edição de perfil do usuário
-    $routes->get('perfil','PerfilController::index',['filter'=>'authAdmin']); //rota para carregar a página de edição do perfil
-    $routes->post('perfil/update','PerfilController::update',['filter'=>'authAdmin']); //rota para carregar o update: username e email
-    $routes->post('perfil/updateSenha','PerfilController::updateSenha',['filter'=>'authAdmin']); //rota para carregar o update: nova senha
-    $routes->post('perfil/updateFoto','PerfilController::updateFoto',['filter'=>'authAdmin']); //rota para carregar o update: foto
-
-//rotas para edição de perfil do usuário
-    $routes->get('fotosproduto/(:num)','FotoProdutoController::index/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
-    $routes->post('fotosproduto/upload/(:num)','FotoProdutoController::upload/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
-    $routes->get('fotosproduto/definircapa/(:num)','FotoProdutoController::definircapa/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
-    $routes->get('fotosproduto/delete/(:num)','FotoProdutoController::delete/$1',['filter'=>'authAdmin']); //rota para carregar o update: foto
-
-    
-    $routes->post('fotosproduto/uploadAjax/(:num)', 'FotoProdutoController::uploadAjax/$1');
-
-    //loja
-$routes->get('produtos/index', 'LojaController::publico');
-$routes->get('produtos/detalhes/(:num)', 'LojaController::detalhes/$1');
-$routes->get('loja/(:num)', 'LojaController::loja/$1');
+// --------------------------------------------------------------------
+// Relatório de Vendas (admin, admin_geral e vendedores logados)
+// --------------------------------------------------------------------
+$routes->get('produtos/relatorio', 'ProdutoController::relatorioVendas', ['filter' => 'authAdmin']);
