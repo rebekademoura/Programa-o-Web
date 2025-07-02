@@ -50,12 +50,21 @@ class DashboardController extends BaseController
     }
 
     public function deleteUser($id)
-    {
-        $user = $this->usuarioModel->find($id);
-        if ($user && $user['role'] !== 'admin_geral') {
-            $this->usuarioModel->delete($id);
-            return redirect()->back()->with('success', 'Usuário excluído com sucesso.');
-        }
+{
+    // Busca o usuário
+    $user = $this->usuarioModel->find($id);
+    if (! $user) {
+        return redirect()->back()->with('error', 'Usuário não encontrado.');
+    }
+
+    // Impede exclusão do admin_geral
+    if ($user['role'] === 'admin_geral') {
         return redirect()->back()->with('error', 'Não é possível excluir este usuário.');
     }
+
+    // Exclui os demais
+    $this->usuarioModel->delete($id);
+    return redirect()->back()->with('success', 'Usuário excluído com sucesso.');
+}
+
 }

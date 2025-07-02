@@ -124,7 +124,7 @@
     Nenhum produto encontrado
   </div>
 <?php endif ?>
-ca
+
 </div>
 
 <?= $this->endSection() ?>

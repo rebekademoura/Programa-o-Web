@@ -33,10 +33,22 @@
                         <span class="carousel-control-next-icon"></span>
                         <span class="visually-hidden">Próximo</span>
                     </button>
-                <?php else: ?>
                     <p class="text-center">Nenhuma imagem disponível para este produto.</p>
                 <?php endif ?>
             </div>
+            <?php if (!empty($fotos)): ?>
+        <div class="row">
+            <?php foreach ($fotos as $foto): ?>
+                <div class="col-md-3 text-center mb-4" style="width: 100px; height: 100px;">
+                    <div class="card">
+                        <img src="<?= base_url('uploads/fotos/' . $foto['caminho']) ?>" class="card-img-top" style="max-height: 200px; object-fit: cover;">
+                    </div>
+                </div>
+            <?php endforeach ?>
+        </div>
+    <?php else: ?>
+        <p>Nenhuma foto encontrada</p>
+    <?php endif ?>
         </div>
 
         <!-- Coluna das Informações -->
@@ -45,7 +57,7 @@
             <p><strong>Preço à vista:</strong> R$ <?= number_format($produto['preco'], 2, ',', '.') ?></p>
             <?php
                 $preco = $produto['preco'];
-                $precoParcelado = $preco * pow(1.03, 12);
+                $precoParcelado = $preco * 1.03;
                 $parcela = $precoParcelado / 12;
             ?>
             <p><strong>Parcelado:</strong> 12x de R$ <?= number_format($parcela, 2, ',', '.') ?> (com juros)</p>

@@ -8,7 +8,8 @@ use App\Models\FotoProdutoModel;
 use App\Models\UsuarioModel;
 use App\Models\CarrinhoModel;
 use App\Models\VendaModel;
-
+use CodeIgniter\Controller;
+use RuntimeException;
 
 class LojaController extends BaseController
 {
@@ -17,8 +18,7 @@ class LojaController extends BaseController
     protected $usuarioModel;
     protected $carrinhoModel;
     protected $vendaModel;
-        protected $resendApiKey;
-
+    protected $resendApiKey;
 
     public function __construct()
     {
@@ -27,12 +27,11 @@ class LojaController extends BaseController
         $this->usuarioModel   = new UsuarioModel();
         $this->carrinhoModel  = new CarrinhoModel();
         $this->vendaModel     = new VendaModel();
-                $this->resendApiKey   = getenv('RESEND_API_KEY'); // coloque sua chave no .env
-
+        $this->resendApiKey   = getenv('RESEND_API_KEY'); // Defina no .env
     }
 
     // 1) Lista pública de produtos
-     public function publico()
+    public function publico()
     {
         $categoriaModel = new \App\Models\CategoriasModel();
 
@@ -43,20 +42,23 @@ class LojaController extends BaseController
         $query = $this->produtoModel->getComCategoriaECapa()
                     ->where('produtos.status', 'aprovado');
 
-        if (! empty($filtroNome)) {
+        if ($filtroNome) {
             $query->like('produtos.nome', $filtroNome);
         }
-        if (! empty($filtroPreco)) {
-            if ($filtroPreco === 'baixo') {
-                $query->where('produtos.preco <', 100);
-            } elseif ($filtroPreco === 'medio') {
-                $query->where('produtos.preco >=', 100)
-                      ->where('produtos.preco <=', 500);
-            } else {
-                $query->where('produtos.preco >', 500);
+        if ($filtroPreco) {
+            switch ($filtroPreco) {
+                case 'baixo':
+                    $query->where('produtos.preco <', 100);
+                    break;
+                case 'medio':
+                    $query->where('produtos.preco >=', 100)
+                          ->where('produtos.preco <=', 500);
+                    break;
+                default:
+                    $query->where('produtos.preco >', 500);
             }
         }
-        if (! empty($idCategoria)) {
+        if ($idCategoria) {
             $query->where('produtos.id_categoria', $idCategoria);
         }
 
@@ -72,38 +74,37 @@ class LojaController extends BaseController
 
     // 2) Detalhes de um produto
     public function detalhes($id)
-{
-    $produto = $this->produtoModel
-        ->select('produtos.*, usuarios.username as nome_vendedor')
-        ->join('usuarios', 'usuarios.id = produtos.usuario_id', 'left')
-        ->where('produtos.status', 'aprovado')
-        ->find($id);
+    {
+        $produto = $this->produtoModel
+            ->select('produtos.*, usuarios.username as nome_vendedor')
+            ->join('usuarios', 'usuarios.id = produtos.usuario_id', 'left')
+            ->where('produtos.status', 'aprovado')
+            ->find($id);
 
-    if (! $produto) {
-        return redirect()->to('/')->with('erro', 'Produto não encontrado ou não aprovado');
+        if (! $produto) {
+            return redirect()->to('/')->with('error', 'Produto não encontrado ou não aprovado');
+        }
+
+        $fotos = $this->fotoModel->where('produto_id', $id)->findAll();
+        $relacionados = $this->produtoModel
+            ->getComCategoriaECapa()
+            ->where('produtos.status', 'aprovado')
+            ->where('produtos.id !=', $produto['id'])
+            ->findAll();
+
+        $vendedor = $this->usuarioModel->find($produto['usuario_id']);
+
+        return view('publico/detalhe', [
+            'produto'  => $produto,
+            'fotos'    => $fotos,
+            'produtos' => $relacionados,
+            'vendedor' => $vendedor,
+        ]);
     }
 
-    $fotos = $this->fotoModel->where('produto_id', $id)->findAll();
-    $relacionados = $this->produtoModel
-        ->getComCategoriaECapa()
-        ->where('produtos.status', 'aprovado')
-        ->where('produtos.id !=', $produto['id'])
-        ->findAll();
-
-    // <<< Aqui buscamos o vendedor e o enviamos à view
-    $vendedor = $this->usuarioModel->find($produto['usuario_id']);
-
-    return view('publico/detalhe', [
-        'produto'     => $produto,
-        'fotos'       => $fotos,
-        'produtos'    => $relacionados,
-        'vendedor'    => $vendedor,   // *** não esqueça dessa linha ***
-    ]);
-}
-
-
     // 3) Loja de um vendedor
-    public function lojaVendedor($usuarioId)    {
+    public function lojaVendedor($usuarioId)
+    {
         $produtos = $this->produtoModel
             ->getProdutosPorUsuarioComCategoriaECapa((int) $usuarioId)
             ->where('produtos.status', 'aprovado')
@@ -111,7 +112,7 @@ class LojaController extends BaseController
 
         $vendedor = $this->usuarioModel->find($usuarioId);
         if (! $vendedor) {
-            return redirect()->to('/')->with('erro', 'Vendedor não encontrado');
+            return redirect()->to('/')->with('error', 'Vendedor não encontrado');
         }
 
         return view('publico/loja', [
@@ -120,57 +121,44 @@ class LojaController extends BaseController
         ]);
     }
 
-
     // 4) Adiciona ao carrinho
     public function adicionarAoCarrinho($produtoId = null)
     {
         $usuarioId = session()->get('usuario_id');
-
-        // Se não estiver logado, redireciona para login
-        if (!$usuarioId) {
+        if (! $usuarioId) {
             return redirect()->to('/login')
                              ->with('error', 'Você precisa estar logado para adicionar produtos ao carrinho');
         }
 
-        // Valida ID do produto
-        if (!$produtoId) {
+        if (! $produtoId) {
             return redirect()->back()->with('error', 'ID do produto não informado');
         }
 
-        // Busca o produto
         $produto = $this->produtoModel->find($produtoId);
-        if (!$produto) {
+        if (! $produto) {
             return redirect()->back()->with('error', 'Produto não encontrado');
         }
 
-        // Captura dados do form
         $quantidade     = (int) $this->request->getPost('quantidade');
         $formaPagamento = $this->request->getPost('forma_pagamento') ?? 'cartao';
         $parcelas       = (int) $this->request->getPost('parcelas');
 
-        // Se Pix, força uma parcela apenas
         if ($formaPagamento === 'pix') {
             $parcelas = 1;
         }
 
-        // Validações
         if ($quantidade < 1) {
             return redirect()->back()->with('error', 'Quantidade inválida. Deve ser ao menos 1.');
         }
         if ($formaPagamento === 'cartao' && ($parcelas < 1 || $parcelas > 12)) {
-            return redirect()->back()->with('error', 'Número de parcelas inválido. Escolha entre 1 e 12.');
+            return redirect()->back()->with('error', 'Parcelas inválidas. Escolha entre 1 e 12.');
         }
         if ($produto['estoque'] < $quantidade) {
-            return redirect()->back()->with('error', "Estoque insuficiente. Há apenas {$produto['estoque']} unidade(s) disponível(is).");
+            return redirect()->back()->with('error', "Estoque insuficiente. Apenas {$produto['estoque']} disponível(is).");
         }
 
-        // Decrementa estoque
-        $this->produtoModel->update(
-            $produtoId,
-            ['estoque' => $produto['estoque'] - $quantidade]
-        );
+        $this->produtoModel->update($produtoId, ['estoque' => $produto['estoque'] - $quantidade]);
 
-        // Insere no carrinho
         $this->carrinhoModel->insert([
             'usuario_id'      => $usuarioId,
             'produto_id'      => $produtoId,
@@ -180,8 +168,7 @@ class LojaController extends BaseController
             'parcelas'        => $parcelas,
         ]);
 
-        return redirect()->to('/')
-                         ->with('success', 'Produto adicionado ao carrinho com sucesso!');
+        return redirect()->to('/')->with('success', 'Produto adicionado ao carrinho!');
     }
 
     // 5) Exibe itens do carrinho
@@ -189,21 +176,15 @@ class LojaController extends BaseController
     {
         $usuarioId = session()->get('usuario_id');
         if (! $usuarioId) {
-            return redirect()->to('/login')
-                             ->with('error', 'Você precisa estar logado para ver o carrinho.');
+            return redirect()->to('/login')->with('error', 'Você precisa estar logado para ver o carrinho.');
         }
 
-        $itens = $this->carrinhoModel
-                      ->where('usuario_id', $usuarioId)
-                      ->findAll();
-
+        $itens = $this->carrinhoModel->where('usuario_id', $usuarioId)->findAll();
         foreach ($itens as &$item) {
-            $produto         = $this->produtoModel->find($item['produto_id']);
-            $item['produto'] = $produto;
-            $base            = $produto['preco'] * $item['quantidade'];
-            $item['preco_total'] = ($item['parcelas'] > 1)
-                ? $base * 1.03
-                : $base;
+            $produto = $this->produtoModel->find($item['produto_id']);
+            $base    = $produto['preco'] * $item['quantidade'];
+            $item['produto']     = $produto;
+            $item['preco_total'] = $item['parcelas'] > 1 ? $base * 1.03 : $base;
         }
 
         return view('publico/carrinho', ['itens' => $itens]);
@@ -213,8 +194,7 @@ class LojaController extends BaseController
     public function removerDoCarrinho($id)
     {
         $this->carrinhoModel->delete($id);
-        return redirect()->back()
-                         ->with('success', 'Item removido do carrinho.');
+        return redirect()->back()->with('success', 'Item removido do carrinho.');
     }
 
     // 7) Remove itens selecionados
@@ -224,129 +204,136 @@ class LojaController extends BaseController
         foreach ($selecionados as $id) {
             $this->carrinhoModel->delete((int) $id);
         }
-        return redirect()->back()
-                         ->with('success', 'Itens selecionados removidos com sucesso.');
+        return redirect()->back()->with('success', 'Itens selecionados removidos!');
     }
 
-    // 8) Finaliza a compra (envia e-mails via Resend API e limpa o carrinho)
+    // 8) envio via Resend API, acumulando logs para console, com debug da chave
     protected function sendResendEmail(string $to, string $subject, string $html): void
-    {
-        $payload = json_encode([
-            'from'    => 'no-reply@sua-loja.com',
-            'to'      => $to,
-            'subject' => $subject,
-            'html'    => $html,
-        ]);
+{
+    // 1) Debug da chave
+    $this->logs[] = "[Debug] RESEND_API_KEY: " . ($this->resendApiKey ?: 'NULL');
 
-        $ch = curl_init('https://api.resend.com/emails');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_HTTPHEADER     => [
-                'Authorization: Bearer ' . $this->resendApiKey,
-                'Content-Type: application/json',
-            ],
-            CURLOPT_POSTFIELDS     => $payload,
-        ]);
-        $response = curl_exec($ch);
-        if ($response === false) {
-            log_message('error', 'Resend cURL error: '.curl_error($ch));
-        }
-        curl_close($ch);
+    if (empty($this->resendApiKey)) {
+        $this->logs[] = "[Error] Chave da API Resend não configurada.";
+        return;
     }
 
+    // 2) Monta payload
+    $fromEmail = 'onboarding@resend.dev';
+    $payload = json_encode([
+        'from'    => $fromEmail,
+        'to'      => [$to],
+        'subject' => $subject,
+        'html'    => $html,
+    ], JSON_UNESCAPED_UNICODE);
+    $this->logs[] = "[Resend] Payload JSON: {$payload}";
+
+    // 3) Inicializa CURL
+    $ch = curl_init('https://api.resend.com/emails');
+    if (! $ch) {
+        $this->logs[] = "[Error] curl_init retornou false.";
+        return;
+    }
+    $this->logs[] = "[Resend] curl_init OK";
+
+    // 4) Configurações de CURL
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_HTTPHEADER     => [
+            "Authorization: Bearer {$this->resendApiKey}",
+            'Content-Type: application/json',
+        ],
+        CURLOPT_POSTFIELDS     => $payload,
+    ]);
+    $this->logs[] = "[Resend] curl_setopt_array configurado";
+
+    // 5) Executa e captura resposta/erro
+    $response = curl_exec($ch);
+    $curlErr  = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    $this->logs[] = "[Resend] curl_exec resposta raw: " . var_export($response, true);
+    if ($curlErr) {
+        $this->logs[] = "[Resend] curl_error: {$curlErr}";
+    }
+    $this->logs[] = "[Resend] HTTP status code: {$httpCode}";
+
+    // 6) Interpretação do código HTTP
+    if ($response === false) {
+        $this->logs[] = "[Resend] Execução falhou.";
+    } elseif ($httpCode < 200 || $httpCode >= 300) {
+        $this->logs[] = "[Resend] resposta HTTP não OK ({$httpCode}): {$response}";
+    } else {
+        $this->logs[] = "[Resend] E-mail enviado com sucesso. HTTP {$httpCode}";
+    }
+
+    curl_close($ch);
+}
+
+
+    // 9) finalizar compra, registrar vendas, enviar e-mail apenas ao comprador e preparar logs
     public function finalizarCompra()
-    {
-        $usuarioId = session()->get('usuario_id');
-        if (! $usuarioId) {
-            return redirect()->to('/login')
-                             ->with('error', 'Você precisa estar logado para finalizar a compra.');
-        }
+{
+    $uid = session()->get('usuario_id');
+    $this->logs[] = "[Loja] iniciar finalizarCompra para user: {$uid}";
+    if (! $uid) {
+        session()->setFlashdata('logs', $this->logs);
+        return redirect()->to('/login')->with('error','Login requerido');
+    }
 
-        $itens = $this->carrinhoModel
-                      ->where('usuario_id', $usuarioId)
-                      ->findAll();
+    // Recebe forma e parcelas do POST
+    $formaPagamento = $this->request->getPost('forma_pagamento');
+    $parcelas       = (int) $this->request->getPost('parcelas');
+    if ($formaPagamento === 'pix') {
+        $parcelas = 1;
+    }
 
-        if (empty($itens)) {
-            return redirect()->back()
-                             ->with('error', 'Seu carrinho está vazio.');
-        }
+    $itens = $this->carrinhoModel->where('usuario_id', $uid)->findAll();
+    $this->logs[] = "[Loja] itens no carrinho: " . count($itens);
+    if (empty($itens)) {
+        session()->setFlashdata('logs', $this->logs);
+        return redirect()->back()->with('error','Carrinho vazio');
+    }
 
-        // 1) Prepara dados do comprador
-        $comprador = $this->usuarioModel->find($usuarioId);
-        $descricaoComprador = [];
-        $totalComprador     = 0;
+    $comprador = $this->usuarioModel->find($uid);
+    $this->logs[] = "[Loja] comprador: {$comprador['email']}";
+    $descricao = [];
+    $total     = 0;
 
-        // agrupar itens por vendedor
-        $itensPorVendedor = [];
+    foreach ($itens as $item) {
+        $p   = $this->produtoModel->find($item['produto_id']);
+        $sub = $p['preco'] * $item['quantidade'] * ($parcelas > 1 ? 1.03 : 1);
+        $descricao[] = "{$p['nome']} x{$item['quantidade']} => R$ " . number_format($sub,2,',','.');
+        $total += $sub;
 
-        foreach ($itens as $item) {
-            $p      = $this->produtoModel->find($item['produto_id']);
-            $qtde   = $item['quantidade'];
-            $juros  = $item['parcelas'] > 1 ? 1.03 : 1;
-            $sub    = $p['preco'] * $qtde * $juros;
-
-            $descricaoComprador[] = "{$p['nome']} x{$qtde} — R$ " . number_format($sub, 2, ',', '.');
-            $totalComprador      += $sub;
-            $itensPorVendedor[$p['usuario_id']][] = "{$p['nome']} x{$qtde} ({$item['parcelas']}x)";
-        }
-
-        // 2) Envia ao COMPRADOR
-        $htmlComprador = "
-            <h1>Obrigado pela sua compra, {$comprador['username']}!</h1>
-            <p>Você adquiriu:</p>
-            <ul><li>" . implode("</li><li>", $descricaoComprador) . "</li></ul>
-            <p><strong>Total:</strong> R$ " . number_format($totalComprador, 2, ',', '.') . "</p>
-        ";
-        $this->sendResendEmail(
-            $comprador['email'],
-            'Compra confirmada com sucesso!',
-            $htmlComprador
-        );
-
-        // 3) Envia a cada VENDEDOR
-        foreach ($itensPorVendedor as $vendedorId => $lista) {
-            $v = $this->usuarioModel->find($vendedorId);
-            $htmlVendedor = "
-                <h1>Olá {$v['username']}, você recebeu um novo pedido!</h1>
-                <p>Detalhes:</p>
-                <ul><li>" . implode("</li><li>", $lista) . "</li></ul>
-            ";
-            $this->sendResendEmail(
-                $v['email'],
-                'Você recebeu um novo pedido!',
-                $htmlVendedor
-            );
-        }
-
-        // 4) Limpa o carrinho
-        $this->carrinhoModel
-             ->where('usuario_id', $usuarioId)
-             ->delete();
-
-
-         foreach ($itens as $item) {
-        $p      = $this->produtoModel->find($item['produto_id']);
-        $qtde   = $item['quantidade'];
-        $juros  = $item['parcelas'] > 1 ? 1.03 : 1;
-        $sub    = $p['preco'] * $qtde * $juros;
-
-        // Registra venda:
+        $this->logs[] = "[Loja] registrando venda compr={$uid}, vend={$p['usuario_id']}, prod={$p['id']}, val={$sub}";
         $this->vendaModel->insert([
-            'usuario_comprador_id' => $usuarioId,
-            'usuario_vendedor_id'  => $p['usuario_id'],
-            'produto_id'           => $p['id'],
-            'quantidade'           => $qtde,
-            'valor_total'          => $sub,
-            'forma_pagamento'      => $item['forma_pagamento'],
-            'parcelas'             => $item['parcelas'],
-            'criado_em'            => date('Y-m-d H:i:s'),
+            'usuario_comprador_id'=> $uid,
+            'usuario_vendedor_id' => $p['usuario_id'],
+            'produto_id'          => $p['id'],
+            'quantidade'          => $item['quantidade'],
+            'valor_total'         => $sub,
+            'forma_pagamento'     => $formaPagamento,
+            'parcelas'            => $parcelas,
+            'criado_em'           => date('Y-m-d H:i:s'),
         ]);
     }
 
+    // Envia email apenas ao comprador
+    $this->logs[] = '[Loja] enviando email comprador';
+    $htmlCompr = '<h1>Obrigado, '.$comprador['username'].'</h1>'
+      . '<ul><li>'.implode('</li><li>',$descricao).'</li></ul>';
+    $this->sendResendEmail($comprador['email'], 'Compra Confirmada', $htmlCompr);
 
-        return redirect()->to('loja/carrinho')
-                         ->with('success', 'Compra finalizada e e-mails enviados pelo Resend.');
-    }
+    // Limpa carrinho
+    $this->carrinhoModel->where('usuario_id', $uid)->delete();
+    $this->logs[] = '[Loja] carrinho limpo';
+    $this->logs[] = '[Loja] finalizarCompra OK';
+
+    session()->setFlashdata('logs', $this->logs);
+    return redirect()->to('loja/carrinho')->with('success','Compra concluída');
+}
+
 
 }

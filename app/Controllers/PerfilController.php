@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\UsuarioModel;
 
 class PerfilController extends BaseController
@@ -15,91 +14,102 @@ class PerfilController extends BaseController
         $this->usuarioModel = new UsuarioModel();
     }
 
+    protected function resolveUsuarioId(): int
+    {
+        // 1) Tenta obter de um campo hidden 'user_id' no POST
+        $id = $this->request->getPost('user_id');
+        // 2) Se não vier no POST, tenta obter como parâmetro de rota
+        if (! $id) {
+            $id = $this->request->getGet('user_id');
+        }
+        // 3) Se ainda não tiver, cai no usuário da sessão
+        if (! $id) {
+            $sess = session()->get('usuario');
+            $id   = $sess['id'];
+        }
+        return (int) $id;
+    }
+
     public function index()
     {
-        return view('perfil/index');
+        // Se quiser exibir o perfil de outro usuário, use ?user_id=123
+        $userId = $this->resolveUsuarioId();
+        $usuario = $this->usuarioModel->find($userId);
+        return view('perfil/index', ['usuario' => $usuario]);
     }
 
     public function update()
     {
-        //salvar no banco de dados a atualização de nome e email
-        $usuario = session()->get('usuario');
-        $this->usuarioModel->update($usuario['id'],
-            ['email'    => $this->request->getPost('email'),
-             'username' => $this->request->getPost('username')
-            ]    
-        );
+        $userId = $this->resolveUsuarioId();
 
-        //atualizar dados da sessão após alteração no banco
-        $usuario = $this->usuarioModel->find($usuario['id']);
+        $this->usuarioModel->update($userId, [
+            'username' => $this->request->getPost('username'),
+            'email'    => $this->request->getPost('email'),
+        ]);
 
-        session()->set('usuario', $usuario);
+        // Se for o próprio usuário, atualiza sessão
+        $sess = session()->get('usuario');
+        if ($sess['id'] === $userId) {
+            $usuario = $this->usuarioModel->find($userId);
+            session()->set('usuario', $usuario);
+        }
 
-        return redirect()->back()->with('success','Perfil Atualizado');
+        return redirect()->back()->with('success', 'Perfil atualizado.');
     }
 
     public function updateSenha()
     {
-        //salvar no banco de dados a atualização de senha
-        $usuario = session()->get('usuario');
+        $userId = $this->resolveUsuarioId();
+        $usuario = $this->usuarioModel->find($userId);
 
-        $senhaAtual = $this->request->getPost('senhaAtual');
-        $novaSenha = $this->request->getPost('novaSenha');
+        $senhaAtual   = $this->request->getPost('senhaAtual');
+        $novaSenha    = $this->request->getPost('novaSenha');
         $confirmeSenha = $this->request->getPost('confirmeSenha');
 
-        //verifica se senha atual é igual a senha atual
-        if(!password_verify($senhaAtual, $usuario['password_hash'])){
-            return redirect()->back()->with('error', 'Senha Atual é inválida');
+        if (! password_verify($senhaAtual, $usuario['password_hash'])) {
+            return redirect()->back()->with('error', 'Senha atual inválida.');
+        }
+        if ($novaSenha !== $confirmeSenha) {
+            return redirect()->back()->with('error', 'Confirmação de senha não coincide.');
         }
 
-        //verifica se a senha atual é igual a confirmação da senha atual
-        if($novaSenha !== $confirmeSenha){
-           return redirect()->back()->with('error', 'A senha e a confirmação da nova senha precisam ser iguais');
+        $this->usuarioModel->update($userId, [
+            'password_hash' => password_hash($novaSenha, PASSWORD_DEFAULT),
+        ]);
+
+        // Se for o próprio, atualiza sessão
+        $sess = session()->get('usuario');
+        if ($sess['id'] === $userId) {
+            $usuario = $this->usuarioModel->find($userId);
+            session()->set('usuario', $usuario);
         }
 
-        //atualizando a senha no banco de dados
-        $this->usuarioModel->update($usuario['id'],
-            [
-                'password_hash' => password_hash($novaSenha, PASSWORD_DEFAULT)
-            ]
-        );
-
-        //atualizando informação na sessão
-        $usuario = $this->usuarioModel->find($usuario['id']);
-        session()->set('usuario', $usuario);
-        return redirect()->back()->with('success','Senha atualizada');
-
-
+        return redirect()->back()->with('success', 'Senha atualizada.');
     }
 
-    public function updateFoto(){
-
-        $usuario = session()->get('usuario');
-
+    public function updateFoto()
+    {
+        $userId  = $this->resolveUsuarioId();
         $arquivo = $this->request->getFile('foto_perfil');
 
-        if($arquivo->isValid() && !$arquivo->hasMoved()){
-            //gerar novo nome para o arquivo
-            $novoNome = $arquivo->getRandomName();
+        if (! $arquivo->isValid() || $arquivo->hasMoved()) {
+            return redirect()->back()->with('error', 'Falha no upload da imagem.');
+        }
 
-            //mover para uploads
-            $arquivo->move(FCPATH . 'uploads', $novoNome);
-            
-            //atualizar no banco
-            $this->usuarioModel->update($usuario['id'],[
-                'foto_perfil' => $novoNome
-            ]);
+        $novoNome = $arquivo->getRandomName();
+        $arquivo->move(FCPATH . 'uploads', $novoNome);
 
-            //atualiza a sessão
-            $usuario = $this->usuarioModel->find($usuario['id']);
+        $this->usuarioModel->update($userId, [
+            'foto_perfil' => $novoNome,
+        ]);
+
+        // Se for o próprio, atualiza sessão
+        $sess = session()->get('usuario');
+        if ($sess['id'] === $userId) {
+            $usuario = $this->usuarioModel->find($userId);
             session()->set('usuario', $usuario);
-            return redirect()->back()->with('success','Foto de perfil atualizada');
-        }
-        else{
-            return redirect()->back()->with('success','Deu problema ao fazer o upload da sua imagem');
         }
 
-
+        return redirect()->back()->with('success', 'Foto atualizada.');
     }
-
 }
